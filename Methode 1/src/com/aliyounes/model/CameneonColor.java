@@ -1,4 +1,4 @@
-package com.aliyounes.helper;
+package com.aliyounes.model;
 
 import java.util.Arrays;
 import java.util.Collections;

@@ -1,13 +1,14 @@
 package com.aliyounes.main;
 
 import com.aliyounes.helper.Configuration;
+import com.aliyounes.helper.Console;
+import com.aliyounes.helper.FIFOList;
+import com.aliyounes.model.Cameneon;
 import com.aliyounes.threads.CameneonThread;
+import com.aliyounes.threads.MatcherThread;
 import com.aliyounes.threads.RemoverThread;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -15,33 +16,34 @@ public class Agora {
 
     private static ServerSocket serverSocket;
     private static Socket clientSocket;
-    private static PrintWriter out;
-    private static BufferedReader in;
+    private static int currentClientIndex = 0;
     private static CameneonThread[] cameneonThreads = new CameneonThread[Configuration.MAX_CLIENTS];
     private static RemoverThread[] removerThreads = new RemoverThread[Configuration.MAX_CLIENTS / 2];
+    private static FIFOList<Cameneon> freeCameneons = new FIFOList<>();
+    private static MatcherThread matcherThread = new MatcherThread(freeCameneons, cameneonThreads, removerThreads);
 
     public static void startListening() {
         try {
+            Console.write("Listening on port "+Configuration.SERVER_PORT+" .....                ");
             serverSocket = new ServerSocket(Configuration.SERVER_PORT);
-            clientSocket = serverSocket.accept();
-            out = new PrintWriter(clientSocket.getOutputStream(), true);
-            in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            String greeting = in.readLine();
-            if ("hello server".equals(greeting)) {
-                out.println("hello client");
+            Console.writeSuccessLine("[ ok ]");
+            //noinspection InfiniteLoopStatement
+            while (true) {
+                clientSocket = serverSocket.accept();
+                Console.writeInfoLine("Accepted connection for client socket "+clientSocket.getRemoteSocketAddress().toString());
+                cameneonThreads[currentClientIndex] = new CameneonThread(clientSocket, matcherThread, freeCameneons);
+                cameneonThreads[currentClientIndex].start();
+                currentClientIndex++;
             }
-            else {
-                out.println("unrecognised greeting");
-            }
+
         } catch (IOException e) {
             e.printStackTrace();
+            stop();
         }
     }
 
     public static void stop() {
         try {
-            in.close();
-            out.close();
             clientSocket.close();
             serverSocket.close();
         } catch (IOException e) {
@@ -49,6 +51,13 @@ public class Agora {
         }
     }
     public static void main(String[] args) {
-	// write your code here
+        Console.writeLine("*******************************************************");
+        Console.writeLine("    Agora pour les cameneons");
+        Console.writeLine("*******************************************************");
+        Console.writeLine();
+        Console.write("Starting matcher thread.....             ");
+        matcherThread.start();
+        Console.writeSuccessLine("[ ok ]");
+        startListening();
     }
 }
