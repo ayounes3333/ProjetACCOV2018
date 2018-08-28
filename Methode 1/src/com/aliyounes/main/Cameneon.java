@@ -1,6 +1,8 @@
 package com.aliyounes.main;
 
 import com.aliyounes.helper.CameneonColor;
+import com.aliyounes.helper.Configuration;
+import com.aliyounes.helper.Console;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -11,8 +13,6 @@ import java.util.UUID;
 
 public class Cameneon {
 
-    private static final String IP = "127.0.0.1";
-    private static final int PORT = 3333;
     private static String id;
     private static CameneonColor color;
     private static Socket clientSocket;
@@ -20,73 +20,73 @@ public class Cameneon {
     private static BufferedReader in;
 
     private static boolean startConnection() {
-        System.out.print("  Starting connection....           ");
+        Console.write("  Starting connection....           ");
         try {
-            clientSocket = new Socket(IP, PORT);
+            clientSocket = new Socket(Configuration.SERVER_IP, Configuration.SERVER_PORT);
             out = new PrintWriter(clientSocket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         } catch (IOException e) {
-            System.out.println("[ err ]");
-            System.out.println();
-            e.printStackTrace();
+            Console.writeErrorLine("[ err ]");
+            Console.writeLine();
+            Console.writeErrorLine(e.getMessage());
             return false;
         }
-        System.out.println("[ ok ]");
+        Console.writeLine("[ ok ]");
         return true;
     }
 
     private static boolean sendData() {
-        System.out.print("  Sending personal info to Agora....            ");
+        Console.write("  Sending personal info to Agora....            ");
         String data = id+"&"+color.name();
         out.println(data);
         String resp;
         try {
             resp = in.readLine();
             if (resp.equalsIgnoreCase("ok")) {
-                System.out.println("[ ok ]");
+                Console.writeSuccessLine("[ ok ]");
                 return true;
             } else {
-                System.out.println("[ err ]");
+                Console.writeErrorLine("[ err ]");
                 return false;
             }
         } catch (IOException e) {
-            System.out.println("[ err ]");
-            System.out.println();
-            e.printStackTrace();
+            Console.writeErrorLine("[ err ]");
+            Console.writeLine();
+            Console.writeErrorLine(e.getMessage());
             return false;
         }
     }
 
     private static void stopConnection() {
-        System.out.print("  Stopping Connection....         ");
+        Console.write("  Stopping Connection....         ");
         try {
             in.close();
             out.close();
             clientSocket.close();
-            System.out.println("[ ok ]");
+            Console.writeLine("[ ok ]");
         } catch (IOException e) {
-            System.out.println("[ err ]");
-            System.out.println();
-            e.printStackTrace();
+            Console.writeErrorLine("[ err ]");
+            Console.writeLine();
+            Console.writeErrorLine(e.getMessage());
         }
     }
     public static void main(String[] args) {
-        System.out.println("*******************************************************");
+        Console.writeLine("*******************************************************");
         id = "Cameneon-" + UUID.randomUUID();
         color = CameneonColor.randomColor();
-        System.out.println("    "+id);
-        System.out.println("    "+color.name());
-        System.out.println("*******************************************************");
-        System.out.println();
+        Console.writeLine("    "+id);
+        Console.writeLine("    "+color.name());
+        Console.writeLine("*******************************************************");
+        Console.writeLine();
         if(startConnection()) {
             if (sendData()) {
                 String data;
                 String[] params;
                 String partnerID;
                 CameneonColor partnerColor;
-                System.out.println("  Let's play!");
-                System.out.println();
-                System.out.println();
+                Console.writeLine("  Let's play!");
+                Console.writeLine();
+                Console.writeLine();
                 while (true) {
                     try {
                         data = in.readLine();
@@ -95,30 +95,31 @@ public class Cameneon {
                         if(partnerID.equalsIgnoreCase(id))
                             break;
                         partnerColor = CameneonColor.getColor(params[1]);
-                        System.out.println("   Partnered with: "+partnerID);
-                        System.out.println("   Partner Color: "+partnerColor.name());
+                        Console.writeInfoLine("   Partnered with: "+partnerID);
+                        Console.writeInfoLine("   Partner Color: "+partnerColor.name());
                         if(color != partnerColor) {
-                            System.out.print("  We both should change color to ");
+                            Console.writeWarning("    We both should change color to ");
                             if(color != CameneonColor.BLEU && partnerColor != CameneonColor.BLEU) {
                                 color = CameneonColor.BLEU;
-                                System.out.println(CameneonColor.BLEU.name());
+                                Console.writeWarningLine(CameneonColor.BLEU.name());
                             } else if(color != CameneonColor.JAUNE && partnerColor != CameneonColor.JAUNE) {
                                 color = CameneonColor.JAUNE;
-                                System.out.println(CameneonColor.JAUNE.name());
+                                Console.writeWarningLine(CameneonColor.JAUNE.name());
                             } else {
                                 color = CameneonColor.ROUGE;
-                                System.out.println(CameneonColor.ROUGE.name());
+                                Console.writeWarningLine(CameneonColor.ROUGE.name());
                             }
-                            System.out.println();
-                            System.out.println();
+                            Console.writeLine();
+                            Console.writeLine();
                         } else {
-                            System.out.println("  We have the same color!");
-                            System.out.println();
-                            System.out.println();
+                            Console.writeSuccessLine("    We have the same color!");
+                            Console.writeLine();
+                            Console.writeLine();
                         }
                     } catch (IOException e) {
-                        System.out.println("  Error receiving messages!");
-                        e.printStackTrace();
+                        Console.writeErrorLine("  Error receiving messages!");
+                        Console.writeLine();
+                        Console.writeErrorLine(e.getMessage());
                     }
                 }
                 stopConnection();
