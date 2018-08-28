@@ -16,4 +16,8 @@ public class FIFOList<T> {
     public synchronized T voirElementCourante() {
         return items.get(0);
     }
+
+    public synchronized int size() {
+        return items.size();
+    }
 }
